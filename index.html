@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shower Water Monitor Pro</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="theme-toggle">
+    <button id="themeBtn" title="Toggle Theme">🌙</button>
+    <button id="fullscreenBtn" title="Fullscreen">⛶</button>
+  </div>
+
+  <main class="app">
+    <header class="app__header">
+      <div>
+        <h1>💧 Shower Water Monitor Pro</h1>
+        <p id="clockDisplay">--</p>
+      </div>
+      <div class="header-actions">
+        <select id="userSelect">
+          <option value="User 1">User 1</option>
+          <option value="User 2">User 2</option>
+          <option value="User 3">User 3</option>
+          <option value="User 4">User 4</option>
+        </select>
+        <button id="connectBtn" class="btn">Connect</button>
+        <button id="stopBeepBtn" class="btn btn-danger">🔇 Stop Alarm</button>
+        <button id="settingsBtn" class="btn btn-secondary">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Water Drop Animation -->
+    <section class="water-drop-container">
+      <div class="water-drop" id="waterDrop">
+        <div class="water-fill" id="waterFill"></div>
+        <span class="drop-value" id="dropValue">0.00 L</span>
+      </div>
+      <div class="drop-label">Total Used</div>
+    </section>
+
+    <!-- Main Stats Cards -->
+    <section class="cards">
+      <article class="card">
+        <h2>Flow Rate</h2>
+        <div class="value"><span id="flowValue">--</span><span class="unit">L/min</span></div>
+      </article>
+      <article class="card">
+        <h2>Session Time</h2>
+        <div class="value"><span id="sessionTime">00:00</span></div>
+      </article>
+      <article class="card status" id="statusCard">
+        <h2>Status</h2>
+        <div class="value" id="statusValue">Disconnected</div>
+      </article>
+      <article class="card">
+        <h2> Streak</h2>
+        <div class="value"><span id="streakValue">0</span><span class="unit">days</span></div>
+      </article>
+    </section>
+
+    <!-- Daily Budget Progress -->
+    <section class="budget-section">
+      <div class="budget-header">
+        <h3>Daily Water Budget</h3>
+        <span id="budgetText">0 / 50 L</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="budgetProgress"></div>
+      </div>
+      <div class="budget-status" id="budgetStatus">Within limit ✓</div>
+    </section>
+
+    <!-- Real-time Chart -->
+    <section class="chart-section">
+      <h3>📊 Real-time Flow Rate</h3>
+      <div class="chart-container">
+        <canvas id="flowChart"></canvas>
+      </div>
+    </section>
+
+    <!-- History Charts -->
+    <section class="history-section">
+      <div class="history-tabs">
+        <button class="tab-btn active" data-tab="daily">Daily</button>
+        <button class="tab-btn" data-tab="weekly">Weekly</button>
+        <button class="tab-btn" data-tab="monthly">Monthly</button>
+      </div>
+      <div class="chart-container">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </section>
+
+    <!-- Session Summary -->
+    <section class="session-summary">
+      <h3> Current Session</h3>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="label">Start Time</span>
+          <span class="val" id="sessionStart">--</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Duration</span>
+          <span class="val" id="sessionDuration">--</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Total Liters</span>
+          <span class="val" id="sessionLiters">--</span>
+        </div>
+        <div class="summary-item">
+          <span class="label">Avg Flow</span>
+          <span class="val" id="sessionAvgFlow">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Carbon & Savings -->
+    <section class="cards eco-cards">
+      <article class="card eco">
+        <h2> CO₂ Saved</h2>
+        <div class="value"><span id="co2Saved">0.00</span><span class="unit">kg</span></div>
+        <p class="sub">vs average usage</p>
+      </article>
+      <article class="card eco">
+        <h2> Money Saved</h2>
+        <div class="value"><span id="moneySaved">₹0.00</span></div>
+        <p class="sub">this month</p>
+      </article>
+      <article class="card eco">
+        <h2>💧 Water Saved</h2>
+        <div class="value"><span id="waterSaved">0</span><span class="unit">L</span></div>
+        <p class="sub">vs 50L avg shower</p>
+      </article>
+    </section>
+
+    <!-- Achievements -->
+    <section class="achievements-section">
+      <h3> Achievements</h3>
+      <div class="badges" id="badgesContainer">
+        <div class="badge locked" data-badge="first-shower" title="First Shower">🚿</div>
+        <div class="badge locked" data-badge="eco-warrior" title="Eco Warrior: Under 20L">🌍</div>
+        <div class="badge locked" data-badge="speed-demon" title="5-Minute Shower">⚡</div>
+        <div class="badge locked" data-badge="week-streak" title="7-Day Streak">🔥</div>
+        <div class="badge locked" data-badge="month-streak" title="30-Day Streak">💎</div>
+        <div class="badge locked" data-badge="water-saver" title="Saved 100L">💧</div>
+        <div class="badge locked" data-badge="money-saver" title="Saved ₹100">💰</div>
+        <div class="badge locked" data-badge="green-hero" title="1kg CO₂ Saved">🌱</div>
+      </div>
+    </section>
+
+    <!-- Leaderboard -->
+    <section class="leaderboard-section">
+      <h3> Family Leaderboard (This Week)</h3>
+      <div class="leaderboard" id="leaderboard">
+        <div class="leader-row header">
+          <span>Rank</span>
+          <span>User</span>
+          <span>Avg L/Shower</span>
+          <span>Showers</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Raw Log -->
+    <section class="log">
+      <div class="log__header">
+        <h3>Latest Data</h3>
+        <span id="portInfo">No port</span>
+      </div>
+      <pre id="rawOutput">Waiting for data...</pre>
+    </section>
+  </main>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2> Settings</h2>
+        <button class="close-btn" id="closeSettings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>Daily Limit (Liters)</label>
+          <input type="number" id="dailyLimitInput" value="50" min="10" max="200" />
+        </div>
+        <div class="setting-group">
+          <label>Flow Sensor Calibration (pulses/L)</label>
+          <input type="number" id="calibrationInput" value="450" min="100" max="1000" />
+        </div>
+        <div class="setting-group">
+          <label>Water Cost (₹ per Liter)</label>
+          <input type="number" id="waterCostInput" value="0.05" step="0.01" min="0.01" />
+        </div>
+        <div class="setting-group">
+          <label>Average Shower (Liters)</label>
+          <input type="number" id="avgShowerInput" value="50" min="20" max="100" />
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="soundEnabled" checked />
+            Sound Alerts
+          </label>
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="voiceEnabled" checked />
+            Voice Announcements
+          </label>
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="notificationsEnabled" />
+            Push Notifications
+          </label>
+        </div>
+        <div class="setting-actions">
+          <button class="btn btn-danger" id="resetTodayBtn">Reset Today</button>
+          <button class="btn btn-danger" id="resetAllBtn">Reset All Data</button>
+          <button class="btn" id="exportBtn">Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
