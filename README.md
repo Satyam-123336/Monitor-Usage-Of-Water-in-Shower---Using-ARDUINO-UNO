@@ -146,4 +146,4 @@ Firmware emits JSON like:
 - Add automated tests for parser and analytics logic
 
 ## License
-Add your preferred license (MIT/Apache-2.0/etc.) in a `LICENSE` file.
+Check LICENSE.md for it.
