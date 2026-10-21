@@ -54,6 +54,8 @@ const alertSound = document.getElementById("alertSound");
 // ========== STATE ==========
 let port;
 let reader;
+let writer = null;
+let limitAlarmMuted = false;
 let settings = {
   dailyLimit: 50,
   calibration: 450,
@@ -500,17 +502,20 @@ function endSession() {
 // ========== ALERTS ==========
 let lastVoiceAnnouncement = 0;
 let audioContext = null;
-let currentOscillator = null;
 let beepInterval = null;
+let activeOscillators = new Set();
 const stopBeepBtn = document.getElementById("stopBeepBtn");
 
 function playAlert() {
-  if (!settings.soundEnabled) return;
+  if (!settings.soundEnabled || limitAlarmMuted) return;
   
   // Create loud beep using Web Audio API
   try {
     if (!audioContext) {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === "suspended") {
+      audioContext.resume().catch(() => {});
     }
     
     // Clear any existing beep
@@ -536,11 +541,12 @@ function playAlert() {
       oscillator.type = "square";
       gainNode.gain.value = 0.5;
       
-      currentOscillator = oscillator;
+      activeOscillators.add(oscillator);
       oscillator.start();
       
       setTimeout(() => {
         try { oscillator.stop(); } catch(e) {}
+        activeOscillators.delete(oscillator);
       }, 150);
       
       beepCount++;
@@ -556,9 +562,13 @@ function stopBeep() {
     clearInterval(beepInterval);
     beepInterval = null;
   }
-  if (currentOscillator) {
-    try { currentOscillator.stop(); } catch(e) {}
-    currentOscillator = null;
+  activeOscillators.forEach((oscillator) => {
+    try { oscillator.stop(); } catch(e) {}
+  });
+  activeOscillators.clear();
+
+  if (audioContext && audioContext.state === "running") {
+    audioContext.suspend().catch(() => {});
   }
   // Also stop any speech
   if ("speechSynthesis" in window) {
@@ -566,7 +576,21 @@ function stopBeep() {
   }
 }
 
-stopBeepBtn.addEventListener("click", stopBeep);
+async function sendSerialCommand(command) {
+  if (!writer) return;
+
+  try {
+    await writer.write(`${command}\n`);
+  } catch (err) {
+    console.warn("Failed to send serial command:", err);
+  }
+}
+
+stopBeepBtn.addEventListener("click", async () => {
+  limitAlarmMuted = true;
+  stopBeep();
+  await sendSerialCommand("STOP_ALARM");
+});
 
 function speak(text) {
   if (settings.voiceEnabled && "speechSynthesis" in window) {
@@ -610,6 +634,12 @@ async function connect() {
   try {
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
+
+    if (port.writable) {
+      const textEncoder = new TextEncoderStream();
+      textEncoder.readable.pipeTo(port.writable);
+      writer = textEncoder.writable.getWriter();
+    }
 
     portInfo.textContent = "Connected";
     setStatus("Connected", "ok");
@@ -670,10 +700,14 @@ async function readLoop() {
           
           if (data.limitExceeded) {
             setStatus("⚠️ Limit exceeded!", "danger");
-            playAlert();
+            if (!limitAlarmMuted) {
+              playAlert();
+            }
           } else if (data.motorIdle) {
+            limitAlarmMuted = false;
             setStatus("Motor idle", "ok");
           } else {
+            limitAlarmMuted = false;
             setStatus("Flow detected 💧", "ok");
           }
           

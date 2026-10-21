@@ -146,4 +146,4 @@ Firmware emits JSON like:
 - Add automated tests for parser and analytics logic
 
 ## License
-Check LICENSE.md for it.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -25,9 +25,9 @@ void setup() {
 
   // Show project heading
   lcd.setCursor(0, 0);
-  lcd.print("MONITOR USAGE OF");
+  lcd.print("H2O TRACKER");
   lcd.setCursor(0, 1);
-  lcd.print("WATER IN SHOWER");
+  lcd.print("DAILY USAGE");
   delay(3000);
   lcd.clear();
 
